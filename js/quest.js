@@ -1,72 +1,82 @@
 //console.log(generateQuest(making));
 
-function generateQuest(making) {
-    cryptedQuestion = JSON.stringify(making[making.length - 1]);
-    var questionObject;
-    for (i = making.length - 2; i >= 0; i--) {
-        questionObject = {
-            heading: making[i].heading,
-            question: making[i].question,
-            nextQuestion: cryptedQuestion,
-            questionIndex: (i)
+var Quest = function(quest) {
+    var currentQuestion = quest.questions;
+    var questionsDiv = $("#questions");
+
+    thisObject = this;
+
+    this.generateQuest = function(making) {
+        cryptedQuestion = JSON.stringify(making[making.length - 1]);
+        var questionObject;
+        for (i = making.length - 2; i >= 0; i--) {
+            questionObject = {
+                heading: making[i].heading,
+                question: making[i].question,
+                nextQuestion: cryptedQuestion,
+                questionIndex: (i)
+            }
+            cryptedQuestion = GibberishAES.enc(JSON.stringify(questionObject), making[i].answer);
         }
-        cryptedQuestion = GibberishAES.enc(JSON.stringify(questionObject), making[i].answer);
+        return JSON.stringify(questionObject);
     }
-    return JSON.stringify(questionObject);
-}
 
-function addQuestionDiv(heading, question, index) {
-    questionsDiv = $("#questions");
+    this.startQuest = function() {
+        addQuestionDiv(currentQuestion.heading, currentQuestion.question, currentQuestion.questionIndex);
+    }
 
-    html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + question + '</div><div class="quiz-answer"><input class="answer" onkeyup="if (event.keyCode == 13) answerQuestion(this)" type="text" /><button class="quiz-button" onclick="answerQuestion(this);">Проверить</button></div></div>';
+    function addQuestionDiv(heading, question, index) {
+        var html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + question + '</div><div class="quiz-answer"><input class="quiz-answer-input" onkeyup="" type="text" /><button class="quiz-button">Проверить</button></div></div>';
 
-    questionsDiv.append(html);
-    inputs = questionsDiv.find("input");
-    inputs[inputs.length-1].focus();
-}
+        var questionDiv = questionsDiv.append(html);
 
-function addWinDiv(heading, message) {
-    questionsDiv = $("#questions");
+        $(questionsDiv).find(".quiz-button")[index].onclick = function() {
+            thisObject.answerQuestion(index);
+        };
 
-    html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + message + '</div></div>';
+        $(questionsDiv).find(".quiz-answer-input")[index].onkeyup = function(event) {
+            if (event.keyCode == 13) thisObject.answerQuestion(index);
+        };
 
-    questionsDiv.append(html);
-}
+        
+        inputs = questionsDiv.find("input");
+        inputs[inputs.length-1].focus();
+    }
 
-function startQuest() {
-    addQuestionDiv(quest.heading, quest.question, quest.questionIndex);
-}
+    function addWinDiv(heading, message) {
+        html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + message + '</div></div>';
 
-function answerQuestion(button) {
-    var questionAnswerDiv = $(button).parent()[0];
-    answerInput = $(questionAnswerDiv).find(".answer")[0];
-    key = answerInput.value;
+        questionsDiv.append(html);
+    }
 
-    try {
-        quest = JSON.parse(GibberishAES.dec(quest.nextQuestion, key));
-        console.log(JSON.stringify(quest));
+    this.answerQuestion = function(questionIndex) {
+        var questionDiv = $(questionsDiv).find(".quiz")[questionIndex];
+        answerInput = $(questionDiv).find(".quiz-answer-input")[0];
+        key = answerInput.value;
 
         try {
-            winBlock = JSON.parse(quest.nextQuestion);
+            currentQuestion = JSON.parse(GibberishAES.dec(currentQuestion.nextQuestion, key));
 
-            // Disable entering
-            $(questionAnswerDiv).find(".quiz-button").attr('disabled','disabled');
-            $(questionAnswerDiv).find(".answer").attr('disabled','disabled');
+            try {
+                winBlock = JSON.parse(currentQuestion.nextQuestion);
 
-            // Show win block
-            addWinDiv(winBlock.heading, winBlock.question);
+                // Disable entering
+                $(questionDiv).find(".quiz-button").attr('disabled','disabled');
+                $(questionDiv).find(".quiz-answer-input").attr('disabled','disabled');
 
+                // Show win block
+                addWinDiv(winBlock.heading, winBlock.question);
+
+            } catch(error) {
+
+                // Disable entering
+                $(questionDiv).find(".quiz-button").attr('disabled','disabled');
+                $(questionDiv).find(".quiz-answer-input").attr('disabled','disabled');
+
+                addQuestionDiv(currentQuestion.heading, currentQuestion.question, currentQuestion.questionIndex);
+            }
         } catch(error) {
-
-            // Disable entering
-            $(questionAnswerDiv).find(".quiz-button").attr('disabled','disabled');
-            $(questionAnswerDiv).find(".answer").attr('disabled','disabled');
-            addQuestionDiv(quest.heading, quest.question, quest.questionIndex);
+            alert("Неправильный ответ!");
         }
-    } catch(error) {
-        console.log(error);
-        alert("Неправильный ответ!");
     }
 }
-
-startQuest();
