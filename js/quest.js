@@ -1,9 +1,9 @@
 //console.log(generateQuest(making));
 
 function generateQuest(making) {
-    cryptedQuestion = "-";
+    cryptedQuestion = JSON.stringify(making[making.length - 1]);
     var questionObject;
-    for (i = making.length - 1; i >= 0; i--) {
+    for (i = making.length - 2; i >= 0; i--) {
         questionObject = {
             heading: making[i].heading,
             question: making[i].question,
@@ -18,7 +18,17 @@ function generateQuest(making) {
 function addQuestionDiv(heading, question, index) {
     questionsDiv = $("#questions");
 
-    html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + question + '</div><div class="quiz-answer"><input class="answer" type="text" /><button class="quiz-button" onclick="answerQuestion('+ index +');">Проверить</button></div></div>';
+    html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + question + '</div><div class="quiz-answer"><input class="answer" onkeyup="if (event.keyCode == 13) answerQuestion(this)" type="text" /><button class="quiz-button" onclick="answerQuestion(this);">Проверить</button></div></div>';
+
+    questionsDiv.append(html);
+    inputs = questionsDiv.find("input");
+    inputs[inputs.length-1].focus();
+}
+
+function addWinDiv(heading, message) {
+    questionsDiv = $("#questions");
+
+    html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + message + '</div></div>';
 
     questionsDiv.append(html);
 }
@@ -27,23 +37,34 @@ function startQuest() {
     addQuestionDiv(quest.heading, quest.question, quest.questionIndex);
 }
 
-function answerQuestion(index) {
-    questionDiv = $("#questions").find(".quiz")[index];
-    answerInput = $(questionDiv).find(".answer")[0];
+function answerQuestion(button) {
+    var questionAnswerDiv = $(button).parent()[0];
+    answerInput = $(questionAnswerDiv).find(".answer")[0];
     key = answerInput.value;
 
     try {
-        text = GibberishAES.dec(quest.nextQuestion, key);
+        quest = JSON.parse(GibberishAES.dec(quest.nextQuestion, key));
+        console.log(JSON.stringify(quest));
 
-        if (text == "WIN") {
-            alert("Победа!");
-        } else {
-            quest = JSON.parse(GibberishAES.dec(quest.nextQuestion, key));
-            //$(questionDiv).find(".answer")[0].find(".quiz-button").attr('disabled','disabled');
+        try {
+            winBlock = JSON.parse(quest.nextQuestion);
+
+            // Disable entering
+            $(questionAnswerDiv).find(".quiz-button").attr('disabled','disabled');
+            $(questionAnswerDiv).find(".answer").attr('disabled','disabled');
+
+            // Show win block
+            addWinDiv(winBlock.heading, winBlock.question);
+
+        } catch(error) {
+
+            // Disable entering
+            $(questionAnswerDiv).find(".quiz-button").attr('disabled','disabled');
+            $(questionAnswerDiv).find(".answer").attr('disabled','disabled');
             addQuestionDiv(quest.heading, quest.question, quest.questionIndex);
         }
-        
     } catch(error) {
+        console.log(error);
         alert("Неправильный ответ!");
     }
 }

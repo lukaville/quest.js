@@ -6,33 +6,6 @@ body {
     color: #0d5794;
 }
 
-.menuButtons {
-    position: fixed;
-    right: 50%;
-    margin-right: 340px;
-    margin-top: 50px;
-    width: 48px;
-}
-
-.menuButton {
-    width: 48px;
-    height: 48px;
-    background: #8bb0cb;
-    margin-bottom: 10px;
-}
-
-.menuButton:hover {
-    background: #6795b7;
-}
-
-.reload {
-    background-image: url(img/reload_icon.png);
-}
-
-.reload:hover {
-    background-image: url(img/reload_icon.png);
-}
-
 h1 {
     margin: 10px;
 }
@@ -84,6 +57,10 @@ header {
     background: #ffffff;
 }
 
+.quiz input:disabled {
+    background: #d3ffbe;
+}
+
 .quiz input {
     font-family: 'Roboto Condensed', sans-serif;
     font-size: 18px;
@@ -104,6 +81,10 @@ header {
     background: #ffffff;
 }
 
+.quiz button:disabled {
+    background: #d3ffbe;
+}
+
 .quiz button {
     font-family: 'Roboto Condensed', sans-serif;
     font-size: 18px;
@@ -112,4 +93,13 @@ header {
     background: #eeeeee;
     height: 29px;
     margin-left: 10px;
+}
+
+footer {
+    width: 600px;
+    margin: 0 auto;
+    color: #878787;
+    padding: 40px;
+    background: #dddddd;
+    text-align: center;
 }
