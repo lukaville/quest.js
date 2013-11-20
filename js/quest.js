@@ -1,20 +1,25 @@
-//console.log(generateQuest(making));
-
 var Quest = function(quest) {
-    var currentQuestion = quest.questions;
+    this.currentQuestion = quest.questions;
+
     var questionsDiv = $("#questions");
 
-    thisObject = this;
+    var answeredQuestionNumber = 0;
+
+    var thisObject = this;
+
+    // Change title, subtitle and footer
+    $("header > h1")[0].innerHTML = quest.title;
+    $("header > h4")[0].innerHTML = quest.subtitle;
+    $("footer")[0].innerHTML = quest.footer;
 
     this.generateQuest = function(making) {
-        cryptedQuestion = JSON.stringify(making[making.length - 1]);
-        var questionObject;
+        var cryptedQuestion = GibberishAES.enc(JSON.stringify(making[making.length - 1]), making[making.length - 2].answer);
         for (i = making.length - 2; i >= 0; i--) {
-            questionObject = {
+            var questionObject = {
                 heading: making[i].heading,
                 question: making[i].question,
                 nextQuestion: cryptedQuestion,
-                questionIndex: (i)
+                questionIndex: i
             }
             cryptedQuestion = GibberishAES.enc(JSON.stringify(questionObject), making[i].answer);
         }
@@ -22,11 +27,15 @@ var Quest = function(quest) {
     }
 
     this.startQuest = function() {
-        addQuestionDiv(currentQuestion.heading, currentQuestion.question, currentQuestion.questionIndex);
+        addQuestionDiv(this.currentQuestion.heading, this.currentQuestion.question, this.currentQuestion.questionIndex);
+    }
+
+    function updateProgressBar() {
+        $("#progress").width((answeredQuestionNumber)/quest.questionNumber*680);
     }
 
     function addQuestionDiv(heading, question, index) {
-        var html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + question + '</div><div class="quiz-answer"><input class="quiz-answer-input" onkeyup="" type="text" /><button class="quiz-button">Проверить</button></div></div>';
+        var html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + question + '</div><div class="quiz-answer"><input class="quiz-answer-input" onkeyup="" type="text" /><button class="quiz-button">' + quest.checkButtonMessage + '</button></div></div>';
 
         var questionDiv = questionsDiv.append(html);
 
@@ -44,21 +53,24 @@ var Quest = function(quest) {
     }
 
     function addWinDiv(heading, message) {
-        html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + message + '</div></div>';
+        var html = '<div class="quiz"><div class="quiz-heading">' + heading + '</div><div class="quiz-content">' + message + '</div></div>';
 
         questionsDiv.append(html);
     }
 
     this.answerQuestion = function(questionIndex) {
         var questionDiv = $(questionsDiv).find(".quiz")[questionIndex];
-        answerInput = $(questionDiv).find(".quiz-answer-input")[0];
-        key = answerInput.value;
+        var answerInput = $(questionDiv).find(".quiz-answer-input")[0];
+        var key = answerInput.value;
 
         try {
-            currentQuestion = JSON.parse(GibberishAES.dec(currentQuestion.nextQuestion, key));
 
-            try {
-                winBlock = JSON.parse(currentQuestion.nextQuestion);
+            this.currentQuestion = JSON.parse(GibberishAES.dec(this.currentQuestion.nextQuestion, key));
+
+            if (typeof(this.currentQuestion.nextQuestion) == "undefined") {
+                answeredQuestionNumber++;
+
+                var winBlock = this.currentQuestion;
 
                 // Disable entering
                 $(questionDiv).find(".quiz-button").attr('disabled','disabled');
@@ -67,16 +79,19 @@ var Quest = function(quest) {
                 // Show win block
                 addWinDiv(winBlock.heading, winBlock.question);
 
-            } catch(error) {
-
+            } else {
                 // Disable entering
                 $(questionDiv).find(".quiz-button").attr('disabled','disabled');
                 $(questionDiv).find(".quiz-answer-input").attr('disabled','disabled');
 
-                addQuestionDiv(currentQuestion.heading, currentQuestion.question, currentQuestion.questionIndex);
+                answeredQuestionNumber++;
+
+                addQuestionDiv(this.currentQuestion.heading, this.currentQuestion.question, this.currentQuestion.questionIndex);
             }
         } catch(error) {
-            alert("Неправильный ответ!");
+            alert(quest.wrongAnswerMessage);
         }
+
+        updateProgressBar();
     }
 }

@@ -95,6 +95,19 @@ header {
     margin-left: 10px;
 }
 
+#progressbar {
+    width: 680px;
+    height: 15px;
+    margin: 0 auto;
+    background: #8bb0cb;
+}
+
+#progress {
+    width: 0px;
+    height: 15px;
+    background: #0d5794;
+}
+
 footer {
     width: 600px;
     margin: 0 auto;
