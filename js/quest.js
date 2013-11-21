@@ -21,8 +21,11 @@ var Quest = function(quest) {
                 nextQuestion: cryptedQuestion,
                 questionIndex: i
             }
-            cryptedQuestion = GibberishAES.enc(JSON.stringify(questionObject), making[i].answer);
+            if (i != 0) {
+                cryptedQuestion = GibberishAES.enc(JSON.stringify(questionObject), making[i - 1].answer);
+            }
         }
+
         return JSON.stringify(questionObject);
     }
 
